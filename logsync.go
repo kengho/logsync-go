@@ -12,9 +12,16 @@ import (
 
 var MAX_LOG_BEGINNING_LENGTH = 256
 var APPEND = true
+var LOGWATCHERPATH = ""
 
 func LogToBuf(logPath, logRotatePath, bufferPath string) () {
-	logWatcherPath := getWatcherPath(logPath)
+	var logWatcherPath string
+	if LOGWATCHERPATH == "" {
+		logWatcherPath = getWatcherPath(logPath)
+	}	else {
+		logWatcherPath = LOGWATCHERPATH
+	}
+fmt.Print(logWatcherPath)
 	logs.Logf("openOrCreateFile('%v')\n", logWatcherPath)
 	logWatcherFile := openOrCreateFile(logWatcherPath, !APPEND)
 	logs.Logf("readLogwatcher(openOrCreateFile('%v'))\n", logWatcherPath)
@@ -39,10 +46,12 @@ func LogToBuf(logPath, logRotatePath, bufferPath string) () {
 	} else {
 		logs.Logf("realLogBeginning[:%v] == '%v' != savedLogBeginning[:%v] == '%v'\n", bytesToCmp, realLogBeginning[:bytesToCmp], bytesToCmp, savedLogBeginning[:bytesToCmp])
 
-		logRotateFile, err := os.Open(logRotatePath)
-		defer logRotateFile.Close()
-		if err == nil {
-			_, _ = writeRestOfFileToBuffer(logRotateFile, savedOffset, bufferPath)
+		if logRotatePath != "" {
+			logRotateFile, err := os.Open(logRotatePath)
+			defer logRotateFile.Close()
+			if err == nil {
+				_, _ = writeRestOfFileToBuffer(logRotateFile, savedOffset, bufferPath)
+			}
 		}
 		offset = 0
 	}
@@ -157,6 +166,10 @@ func getWatcherPath(path string) (string) {
 	watcherPath = fmt.Sprintf(".watcher_%s", watcherPath)
 	watcherPath = wdpath.WdPath(watcherPath)
 	return watcherPath
+}
+
+func SetlogWatcherPath(path string) () {
+	LOGWATCHERPATH = path
 }
 
 // http://stackoverflow.com/a/27516559
